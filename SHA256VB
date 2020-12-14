@@ -1,0 +1,29 @@
+    'This is an example code which could be used in old .NET Frameworks environments
+    'Tested in Framework 3.5
+
+    'Function which sign the message with the Regiondo product key
+    Private Function hmacSHA256(data As String, key As String) As Byte()
+        Using hmac As HMACSHA256 = New HMACSHA256(Encoding.ASCII.GetBytes(key))
+            Return hmac.ComputeHash(Encoding.ASCII.GetBytes(data))
+        End Using
+    End Function
+
+    'This function should be called when setting the HEADER_HMAC and it shoud receive in input the request URL as string 
+    Private Function getAuthHeader(requestUrl) As String
+
+        Dim queryString As String = getQueryString(requestUrl) 'Here we will get only params to be then signed as message with private key
+        Dim timestamp As Long = Date.UtcNow.Subtract(New Date(1970, 1, 1)).TotalSeconds 'Here we get the UnixTime
+        Dim requestData As String = timestamp & PUBLIC_KEY_REGIONDO & queryString
+        Return BitConverter.ToString(hmacSHA256(requestData, SECRET_KEY_REGIONDO)).Replace("-", "").ToLower()
+
+    End Function
+
+   'Function which split the url and return only query params
+   Private Function getQueryString(url As String) As String
+        Dim arr = url.Split("?")
+        If arr.Length > 1 Then
+            Return url.Substring(url.IndexOf("?") + 1)
+        Else
+            Return ""
+        End If
+    End Function
